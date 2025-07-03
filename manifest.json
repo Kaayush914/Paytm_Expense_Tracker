@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Paytm Expense Analyzer",
+  "version": "1.0",
+  "description": "Analyze visible Paytm transactions and generate reports",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://paytm.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
