@@ -1,18 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Get stored transactions and display analysis
-    chrome.storage.local.get(['transactions'], (result) => {
-        const transactions = result.transactions || [];
-        if (transactions.length > 0) {
-            displayAnalysis(transactions);
-        } else {
-            document.getElementById('content').innerHTML = `
-                <div class="no-data">
-                    <p>No transactions found yet.</p>
-                    <p>Visit <a href="https://paytm.com/myorders" target="_blank">Paytm Orders</a> to start tracking.</p>
-                </div>
-            `;
-        }
+    // Create refresh button
+    const refreshButton = document.createElement('button');
+    refreshButton.id = 'refreshBtn';
+    refreshButton.textContent = 'Refresh';
+    refreshButton.style.cssText = `
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 8px 12px;
+        background: #4ECDC4;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        z-index: 10000;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+    document.body.appendChild(refreshButton);
+
+    // Refresh button click handler
+    refreshButton.addEventListener('click', () => {
+        refreshTransactionData();
     });
+
+    // Load initial data
+    loadAndDisplayTransactions();
 });
 
 // Listen for updates from content script
@@ -205,10 +218,12 @@ document.getElementById('analyzeBtn').addEventListener('click', async () => {
                         <canvas id="categoryChart" width="500" height="300"></canvas>
                     </div>
 
-                    <!-- Daily Spending Chart -->
-                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="margin: 0 0 10px 0; color: #4a5568;">Daily Spending Trend</h4>
-                        <canvas id="dailyChart" width="500" height="200"></canvas>
+                   <!-- Daily Spending Chart -->
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 15px 0; color: #4a5568; font-size: 16px;">Daily Spending Trend</h4>
+                        <div style="position: relative; height: 250px; overflow: hidden;">
+                            <canvas id="dailyChart" width="550" height="250" style="max-width: 100%; height: auto;"></canvas>
+                        </div>
                     </div>
 
                     <!-- Spending Pattern Chart -->
@@ -335,55 +350,128 @@ document.getElementById('analyzeBtn').addEventListener('click', async () => {
             }
             
             function createDailyChart(dailyData) {
-                const canvas = document.getElementById('dailyChart');
-                if (!canvas) return;
-                
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                const sortedDays = Object.keys(dailyData).sort();
-                const values = sortedDays.map(day => dailyData[day].total);
-                const dateLabels = sortedDays.map(day => dailyData[day].date);
-                
-                if (values.length === 0) return;
-                
-                const maxValue = Math.max(...values);
-                const padding = 40;
-                const chartWidth = canvas.width - padding * 2;
-                const chartHeight = canvas.height - padding * 2;
-                
-                // Draw axes
-                ctx.strokeStyle = '#e2e8f0';
-                ctx.lineWidth = 1;
+            const canvas = document.getElementById('dailyChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const sortedDays = Object.keys(dailyData).sort();
+            const values = sortedDays.map(day => dailyData[day].total);
+            const dateLabels = sortedDays.map(day => dailyData[day].date);
+            
+            if (values.length === 0) return;
+            
+            // Limit the number of bars to prevent cluttering
+            const maxBars = 15;
+            let displayData = values;
+            let displayLabels = dateLabels;
+            
+            // If we have too many data points, show only the most recent ones
+            if (values.length > maxBars) {
+                displayData = values.slice(-maxBars);
+                displayLabels = dateLabels.slice(-maxBars);
+            }
+            
+            const maxValue = Math.max(...displayData);
+            const padding = 50;
+            const chartWidth = canvas.width - padding * 2;
+            const chartHeight = canvas.height - padding * 2;
+            
+            // Calculate bar width with minimum width constraint
+            const minBarWidth = 20;
+            const idealBarWidth = Math.max(minBarWidth, (chartWidth - (displayData.length - 1) * 5) / displayData.length);
+            const barSpacing = 5;
+            
+            // Draw background grid
+            ctx.strokeStyle = '#f0f4f8';
+            ctx.lineWidth = 1;
+            
+            // Horizontal grid lines
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (chartHeight / 5) * i;
                 ctx.beginPath();
-                ctx.moveTo(padding, padding);
-                ctx.lineTo(padding, canvas.height - padding);
-                ctx.lineTo(canvas.width - padding, canvas.height - padding);
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
                 ctx.stroke();
                 
-                // Draw bars
-                const barWidth = chartWidth / values.length;
-                ctx.fillStyle = '#4ECDC4';
-                
-                values.forEach((value, index) => {
-                    const barHeight = (value / maxValue) * chartHeight;
-                    const x = padding + index * barWidth + barWidth * 0.1;
-                    const y = canvas.height - padding - barHeight;
-                    
-                    ctx.fillRect(x, y, barWidth * 0.8, barHeight);
-                    
-                    // Add value labels on top
-                    ctx.fillStyle = '#2d3748';
-                    ctx.font = '10px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('Rs ' + value.toFixed(0), x + barWidth * 0.4, y - 5);
-                    
-                    // Add date labels at bottom
-                    ctx.fillText(dateLabels[index], x + barWidth * 0.4, canvas.height - padding + 15);
-                    
-                    ctx.fillStyle = '#4ECDC4';
-                });
+                // Add value labels on Y-axis
+                const value = maxValue - (maxValue / 5) * i;
+                ctx.fillStyle = '#718096';
+                ctx.font = '11px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText('Rs ' + value.toFixed(0), padding - 5, y + 4);
             }
+            
+            // Draw main axes
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.stroke();
+            
+            // Calculate total width needed
+            const totalWidth = displayData.length * idealBarWidth + (displayData.length - 1) * barSpacing;
+            const startX = padding + (chartWidth - totalWidth) / 2;
+            
+            // Draw bars with gradient
+            displayData.forEach((value, index) => {
+                const barHeight = (value / maxValue) * chartHeight;
+                const x = startX + index * (idealBarWidth + barSpacing);
+                const y = canvas.height - padding - barHeight;
+                
+                // Create gradient
+                const gradient = ctx.createLinearGradient(0, y, 0, y + barHeight);
+                gradient.addColorStop(0, '#4ECDC4');
+                gradient.addColorStop(1, '#44A08D');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, y, idealBarWidth, barHeight);
+                
+                // Add subtle border
+                ctx.strokeStyle = '#3A9B9A';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x, y, idealBarWidth, barHeight);
+                
+                // Add value labels on top of bars
+                ctx.fillStyle = '#2d3748';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Rs ' + value.toFixed(0), x + idealBarWidth / 2, y - 5);
+                
+                // Add date labels at bottom (rotated if needed)
+                ctx.save();
+                ctx.translate(x + idealBarWidth / 2, canvas.height - padding + 15);
+                
+                // Rotate labels if bars are too narrow
+                if (idealBarWidth < 40) {
+                    ctx.rotate(-Math.PI / 4);
+                }
+                
+                ctx.fillStyle = '#4a5568';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(displayLabels[index], 0, 0);
+                ctx.restore();
+            });
+            
+            // Add chart title
+            ctx.fillStyle = '#2d3748';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Daily Spending Trend', canvas.width / 2, 20);
+            
+            // Add summary info if data was truncated
+            if (values.length > maxBars) {
+                ctx.fillStyle = '#718096';
+                ctx.font = '11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Showing last ${maxBars} days of ${values.length} total days`, canvas.width / 2, canvas.height - 5);
+            }
+}
+
             
             function createPatternChart(categories) {
                 const canvas = document.getElementById('patternChart');
@@ -653,4 +741,134 @@ function createMonthlyChart(monthlyData) {
         
         ctx.fillStyle = '#667eea';
     });
+}
+
+// Refresh function
+function refreshTransactionData() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.textContent = 'Refreshing...';
+        refreshBtn.disabled = true;
+    }
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const activeTab = tabs[0];
+        
+        if (activeTab && activeTab.url && activeTab.url.includes('paytm.com')) {
+            chrome.scripting.executeScript({
+                target: { tabId: activeTab.id },
+                function: extractTransactionData
+            }, (results) => {
+                if (results && results[0] && results[0].result) {
+                    const newTransactions = results[0].result;
+                    chrome.storage.local.set({ transactions: newTransactions }, () => {
+                        displayAnalysis(newTransactions);
+                        showNotification('Data refreshed! Found ' + newTransactions.length + ' transactions.');
+                    });
+                }
+                
+                if (refreshBtn) {
+                    refreshBtn.textContent = 'Refresh';
+                    refreshBtn.disabled = false;
+                }
+            });
+        } else {
+            showNotification('Please navigate to Paytm page to refresh data.');
+            if (refreshBtn) {
+                refreshBtn.textContent = 'Refresh';
+                refreshBtn.disabled = false;
+            }
+        }
+    });
+}
+
+// Extract transaction data
+function extractTransactionData() {
+    const rows = document.querySelectorAll('._2PmH5');
+    const transactions = [];
+
+    rows.forEach(row => {
+        const description = row.querySelector('._1Jw44')?.textContent?.trim() || '';
+        const amount = row.querySelector('._2Llef._2g75t.LwOpS')?.textContent?.trim() || '';
+        const status = row.querySelector('.vt2ni')?.textContent?.trim() || '';
+        const date = row.querySelector('.UZK5K span:last-child')?.textContent?.trim() || '';
+
+        if (status.toLowerCase().includes('success') && amount) {
+            const amountValue = parseFloat(amount.replace('Rs ', '').replace(/,/g, '')) || 0;
+            
+            let category = 'Other';
+            const desc = description.toLowerCase();
+            if (desc.includes('metro') || desc.includes('taxi') || desc.includes('uber') || desc.includes('ola')) {
+                category = 'Transport';
+            } else if (desc.includes('dth') || desc.includes('bill payment') || desc.includes('electricity') || desc.includes('gas')) {
+                category = 'Bills';
+            } else if (desc.includes('recharge') || desc.includes('mobile') || desc.includes('airtel') || desc.includes('jio')) {
+                category = 'Recharge';
+            } else if (desc.includes('food') || desc.includes('restaurant') || desc.includes('zomato') || desc.includes('swiggy')) {
+                category = 'Food';
+            } else if (desc.includes('movie') || desc.includes('entertainment') || desc.includes('bookmyshow')) {
+                category = 'Entertainment';
+            } else if (desc.includes('shopping') || desc.includes('amazon') || desc.includes('flipkart')) {
+                category = 'Shopping';
+            } else if (desc.includes('medicine') || desc.includes('pharmacy') || desc.includes('hospital')) {
+                category = 'Healthcare';
+            }
+
+            transactions.push({
+                description,
+                amount: amountValue,
+                date,
+                category
+            });
+        }
+    });
+
+    return transactions;
+}
+
+// Load and display transactions
+function loadAndDisplayTransactions() {
+    chrome.storage.local.get(['transactions'], (result) => {
+        const transactions = result.transactions || [];
+        if (transactions.length > 0) {
+            displayAnalysis(transactions);
+        } else {
+            document.getElementById('content').innerHTML = `
+                <div class="no-data">
+                    <p>No transactions found yet.</p>
+                    <p>Visit <a href="https://paytm.com/myorders" target="_blank">Paytm Orders</a> to start tracking.</p>
+                </div>
+            `;
+        }
+    });
+}
+
+// Show notification
+function showNotification(message) {
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 50px;
+        right: 10px;
+        background: #4ECDC4;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 12px;
+        z-index: 10001;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
 }
