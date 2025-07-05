@@ -46,6 +46,8 @@ document.getElementById('analyzeBtn').addEventListener('click', async () => {
             const transactions = [];
             let totalAmount = 0;
             const categories = {};
+            const dailyData = {};
+            const hourlyData = {};
 
             rows.forEach(row => {
                 const description = row.querySelector('._1Jw44')?.textContent?.trim() || '';
@@ -56,26 +58,69 @@ document.getElementById('analyzeBtn').addEventListener('click', async () => {
                 if (status.toLowerCase().includes('success')) {
                     const amountValue = parseFloat(amount.replace('Rs ', '').replace(/,/g, '')) || 0;
                     
+                    // Enhanced categorization
                     let category = 'Other';
                     const desc = description.toLowerCase();
-                    if (desc.includes('metro')) {
+                    if (desc.includes('metro') || desc.includes('taxi') || desc.includes('uber') || desc.includes('ola')) {
                         category = 'Transport';
-                    } else if (desc.includes('dth') || desc.includes('bill payment')) {
+                    } else if (desc.includes('dth') || desc.includes('bill payment') || desc.includes('electricity') || desc.includes('gas')) {
                         category = 'Bills';
-                    } else if (desc.includes('recharge')) {
+                    } else if (desc.includes('recharge') || desc.includes('mobile') || desc.includes('airtel') || desc.includes('jio')) {
                         category = 'Recharge';
+                    } else if (desc.includes('food') || desc.includes('restaurant') || desc.includes('zomato') || desc.includes('swiggy')) {
+                        category = 'Food';
+                    } else if (desc.includes('movie') || desc.includes('entertainment') || desc.includes('bookmyshow')) {
+                        category = 'Entertainment';
+                    } else if (desc.includes('shopping') || desc.includes('amazon') || desc.includes('flipkart')) {
+                        category = 'Shopping';
+                    } else if (desc.includes('medicine') || desc.includes('pharmacy') || desc.includes('hospital')) {
+                        category = 'Healthcare';
                     }
 
                     totalAmount += amountValue;
 
+                    // Category aggregation
                     if (!categories[category]) {
                         categories[category] = {
                             total: 0,
-                            count: 0
+                            count: 0,
+                            transactions: []
                         };
                     }
                     categories[category].total += amountValue;
                     categories[category].count += 1;
+                    categories[category].transactions.push({
+                        description,
+                        amount: amountValue,
+                        date
+                    });
+
+                    // Daily aggregation - Fixed date parsing
+                    const transDate = new Date(date);
+                    const dayKey = transDate.toISOString().split('T')[0];
+                    if (!dailyData[dayKey]) {
+                        dailyData[dayKey] = {
+                            total: 0,
+                            count: 0,
+                            date: transDate.toLocaleDateString('en-IN', { 
+                                month: 'short', 
+                                day: 'numeric' 
+                            })
+                        };
+                    }
+                    dailyData[dayKey].total += amountValue;
+                    dailyData[dayKey].count += 1;
+
+                    // Hourly aggregation (assuming current time for demo)
+                    const hour = transDate.getHours();
+                    if (!hourlyData[hour]) {
+                        hourlyData[hour] = {
+                            total: 0,
+                            count: 0
+                        };
+                    }
+                    hourlyData[hour].total += amountValue;
+                    hourlyData[hour].count += 1;
 
                     transactions.push({
                         description,
@@ -92,62 +137,295 @@ document.getElementById('analyzeBtn').addEventListener('click', async () => {
                 existingReport.remove();
             }
 
-            // Create report container
+            // Create comprehensive report container
             const container = document.createElement('div');
             container.id = 'paytm-analysis-report';
             container.style.cssText = `
                 position: fixed;
-                top: 20px;
-                right: 20px;
+                top: 10px;
+                right: 10px;
                 background: white;
                 padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                max-width: 400px;
-                max-height: 80vh;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                max-width: 600px;
+                max-height: 90vh;
                 overflow-y: auto;
                 z-index: 9999;
-                font-family: Arial, sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+                border: 1px solid #e1e5e9;
             `;
+
+            // Calculate insights
+            const avgTransaction = totalAmount / transactions.length;
+            const topCategory = Object.entries(categories).sort((a, b) => b[1].total - a[1].total)[0];
+            const recentTransactions = transactions.slice(0, 5);
 
             let html = `
-                <h2 style="margin: 0 0 15px 0; color: #333;">Transaction Analysis</h2>
-                <div style="margin-bottom: 15px;">
-                    <strong>Total Transactions:</strong> ${transactions.length}<br>
-                    <strong>Total Amount:</strong> ₹${totalAmount.toFixed(2)}
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0; color: #1a202c; font-size: 24px;">Expense Analysis</h2>
+                    <button id="closeReport" style="
+                        padding: 8px 12px;
+                        background: #e53e3e;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    ">Close</button>
                 </div>
-                <h3 style="margin: 0 0 10px 0; color: #444;">Category Breakdown</h3>
+
+                <!-- Summary Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;">Rs ${totalAmount.toFixed(0)}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Total Spent</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;">${transactions.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Transactions</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;">Rs ${avgTransaction.toFixed(0)}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Average</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 18px; font-weight: bold;">${topCategory ? topCategory[0] : 'N/A'}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Top Category</div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div style="margin-bottom: 25px;">
+                    <h3 style="margin: 0 0 15px 0; color: #2d3748; font-size: 18px;">Visual Analytics</h3>
+                    
+                    <!-- Category Pie Chart -->
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: #4a5568;">Category Distribution</h4>
+                        <canvas id="categoryChart" width="500" height="300"></canvas>
+                    </div>
+
+                    <!-- Daily Spending Chart -->
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: #4a5568;">Daily Spending Trend</h4>
+                        <canvas id="dailyChart" width="500" height="200"></canvas>
+                    </div>
+
+                    <!-- Spending Pattern Chart -->
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px;">
+                        <h4 style="margin: 0 0 10px 0; color: #4a5568;">Spending Patterns</h4>
+                        <canvas id="patternChart" width="500" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div style="margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0; color: #2d3748; font-size: 18px;">Category Breakdown</h3>
+                    <div style="display: grid; gap: 10px;">
             `;
 
-            Object.entries(categories).forEach(([category, data]) => {
-                const percentage = ((data.total / totalAmount) * 100).toFixed(1);
+            // Add category cards
+            Object.entries(categories)
+                .sort((a, b) => b[1].total - a[1].total)
+                .forEach(([category, data]) => {
+                    const percentage = ((data.total / totalAmount) * 100).toFixed(1);
+                    
+                    html += `
+                        <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div>
+                                    <div style="font-weight: 600; color: #2d3748;">${category}</div>
+                                    <div style="font-size: 12px; color: #718096;">${data.count} transactions</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: #2d3748;">Rs ${data.total.toFixed(2)}</div>
+                                <div style="font-size: 12px; color: #718096;">${percentage}%</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+            html += `
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div>
+                    <h3 style="margin: 0 0 15px 0; color: #2d3748; font-size: 18px;">Recent Transactions</h3>
+                    <div style="background: #f8fafc; border-radius: 8px; overflow: hidden;">
+            `;
+
+            recentTransactions.forEach((trans, index) => {
                 html += `
-                    <div style="margin-bottom: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
-                        <strong>${category}</strong><br>
-                        Total: ₹${data.total.toFixed(2)} (${percentage}%)<br>
-                        Transactions: ${data.count}
+                    <div style="padding: 12px; border-bottom: ${index < recentTransactions.length - 1 ? '1px solid #e2e8f0' : 'none'}; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 500; color: #2d3748; font-size: 14px;">${trans.description}</div>
+                            <div style="font-size: 12px; color: #718096;">${trans.date} • ${trans.category}</div>
+                        </div>
+                        <div style="font-weight: 600; color: #e53e3e;">Rs ${trans.amount.toFixed(2)}</div>
                     </div>
                 `;
             });
 
             html += `
-                <button id="closeReport" style="
-                    margin-top: 10px;
-                    padding: 8px 15px;
-                    background: #dc3545;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                ">Close Report</button>
+                    </div>
+                </div>
             `;
 
             container.innerHTML = html;
             document.body.appendChild(container);
 
+            // Create charts after DOM is ready
+            setTimeout(() => {
+                createCategoryChart(categories);
+                createDailyChart(dailyData);
+                createPatternChart(categories);
+            }, 100);
+
+            // Close button handler
             document.getElementById('closeReport').addEventListener('click', () => {
                 container.remove();
             });
+
+            // Chart creation functions
+            function createCategoryChart(categories) {
+                const canvas = document.getElementById('categoryChart');
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                const labels = Object.keys(categories);
+                const data = labels.map(cat => categories[cat].total);
+                
+                // Simple pie chart
+                const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
+                
+                const total = data.reduce((sum, val) => sum + val, 0);
+                let currentAngle = 0;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const radius = Math.min(centerX, centerY) - 20;
+                
+                data.forEach((value, index) => {
+                    const sliceAngle = (value / total) * 2 * Math.PI;
+                    
+                    // Draw slice
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+                    ctx.lineTo(centerX, centerY);
+                    ctx.fillStyle = colors[index % colors.length];
+                    ctx.fill();
+                    
+                    // Draw label
+                    const labelAngle = currentAngle + sliceAngle / 2;
+                    const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+                    const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(labels[index], labelX, labelY);
+                    
+                    currentAngle += sliceAngle;
+                });
+            }
+            
+            function createDailyChart(dailyData) {
+                const canvas = document.getElementById('dailyChart');
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const sortedDays = Object.keys(dailyData).sort();
+                const values = sortedDays.map(day => dailyData[day].total);
+                const dateLabels = sortedDays.map(day => dailyData[day].date);
+                
+                if (values.length === 0) return;
+                
+                const maxValue = Math.max(...values);
+                const padding = 40;
+                const chartWidth = canvas.width - padding * 2;
+                const chartHeight = canvas.height - padding * 2;
+                
+                // Draw axes
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding, canvas.height - padding);
+                ctx.lineTo(canvas.width - padding, canvas.height - padding);
+                ctx.stroke();
+                
+                // Draw bars
+                const barWidth = chartWidth / values.length;
+                ctx.fillStyle = '#4ECDC4';
+                
+                values.forEach((value, index) => {
+                    const barHeight = (value / maxValue) * chartHeight;
+                    const x = padding + index * barWidth + barWidth * 0.1;
+                    const y = canvas.height - padding - barHeight;
+                    
+                    ctx.fillRect(x, y, barWidth * 0.8, barHeight);
+                    
+                    // Add value labels on top
+                    ctx.fillStyle = '#2d3748';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Rs ' + value.toFixed(0), x + barWidth * 0.4, y - 5);
+                    
+                    // Add date labels at bottom
+                    ctx.fillText(dateLabels[index], x + barWidth * 0.4, canvas.height - padding + 15);
+                    
+                    ctx.fillStyle = '#4ECDC4';
+                });
+            }
+            
+            function createPatternChart(categories) {
+                const canvas = document.getElementById('patternChart');
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const categoryNames = Object.keys(categories);
+                const categoryTotals = categoryNames.map(name => categories[name].total);
+                
+                if (categoryTotals.length === 0) return;
+                
+                const maxValue = Math.max(...categoryTotals);
+                const padding = 60;
+                const chartWidth = canvas.width - padding * 2;
+                const chartHeight = canvas.height - padding * 2;
+                
+                // Draw horizontal bars
+                const barHeight = chartHeight / categoryNames.length;
+                const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
+                
+                categoryNames.forEach((category, index) => {
+                    const value = categoryTotals[index];
+                    const barWidth = (value / maxValue) * chartWidth;
+                    const y = padding + index * barHeight + barHeight * 0.1;
+                    
+                    // Draw bar
+                    ctx.fillStyle = colors[index % colors.length];
+                    ctx.fillRect(padding, y, barWidth, barHeight * 0.8);
+                    
+                    // Draw category label
+                    ctx.fillStyle = '#2d3748';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(category, 5, y + barHeight * 0.5);
+                    
+                    // Draw value label
+                    ctx.textAlign = 'right';
+                    ctx.fillText('Rs ' + value.toFixed(0), canvas.width - 5, y + barHeight * 0.5);
+                });
+            }
         }
     });
 });
@@ -157,10 +435,7 @@ function displayAnalysis(transactions) {
     
     // Format currency
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR'
-        }).format(amount);
+        return 'Rs ' + amount.toFixed(2);
     };
     
     // Format date
@@ -223,87 +498,7 @@ function displayAnalysis(transactions) {
     createMonthlyChart(analysis.byMonth);
 }
 
-function createCategoryChart(categoryData) {
-    const ctx = document.getElementById('categoryChart').getContext('2d');
-    const labels = Object.keys(categoryData);
-    const data = labels.map(cat => categoryData[cat].total);
-    
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: [
-                    '#FF6384',
-                    '#36A2EB',
-                    '#FFCE56',
-                    '#4BC0C0',
-                    '#9966FF'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right'
-                }
-            }
-        }
-    });
-}
-
-function createMonthlyChart(monthData) {
-    const ctx = document.getElementById('monthlyChart').getContext('2d');
-    const sortedMonths = Object.keys(monthData).sort();
-    const data = sortedMonths.map(month => monthData[month].total);
-    
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: sortedMonths.map(month => {
-                const [year, monthNum] = month.split('-');
-                return new Date(year, monthNum - 1).toLocaleDateString('en-IN', {
-                    month: 'short',
-                    year: 'numeric'
-                });
-            }),
-            datasets: [{
-                label: 'Monthly Spending',
-                data: data,
-                borderColor: '#36A2EB',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: (value) => {
-                            return new Intl.NumberFormat('en-IN', {
-                                style: 'currency',
-                                currency: 'INR',
-                                maximumSignificantDigits: 3
-                            }).format(value);
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Helper function to analyze transactions (same as in content.js)
+// Helper function to analyze transactions
 function analyzeTransactions(transactions) {
     const analysis = {
         total: 0,
@@ -355,4 +550,107 @@ function analyzeTransactions(transactions) {
     analysis.average = analysis.total / analysis.count;
     
     return analysis;
+}
+
+// Chart creation functions for the popup
+function createCategoryChart(categories) {
+    const canvas = document.getElementById('categoryChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const labels = Object.keys(categories);
+    const data = labels.map(cat => categories[cat].total);
+    
+    // Simple pie chart
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
+    
+    const total = data.reduce((sum, val) => sum + val, 0);
+    let currentAngle = 0;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = Math.min(centerX, centerY) - 20;
+    
+    data.forEach((value, index) => {
+        const sliceAngle = (value / total) * 2 * Math.PI;
+        
+        // Draw slice
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+        ctx.lineTo(centerX, centerY);
+        ctx.fillStyle = colors[index % colors.length];
+        ctx.fill();
+        
+        // Draw label
+        const labelAngle = currentAngle + sliceAngle / 2;
+        const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+        const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+        
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[index], labelX, labelY);
+        
+        currentAngle += sliceAngle;
+    });
+}
+
+function createMonthlyChart(monthlyData) {
+    const canvas = document.getElementById('monthlyChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    const sortedMonths = Object.keys(monthlyData).sort();
+    const values = sortedMonths.map(month => monthlyData[month].total);
+    const monthLabels = sortedMonths.map(month => {
+        const [year, monthNum] = month.split('-');
+        return new Date(year, monthNum - 1).toLocaleDateString('en-IN', { 
+            month: 'short', 
+            year: '2-digit' 
+        });
+    });
+    
+    if (values.length === 0) return;
+    
+    const maxValue = Math.max(...values);
+    const padding = 40;
+    const chartWidth = canvas.width - padding * 2;
+    const chartHeight = canvas.height - padding * 2;
+    
+    // Draw axes
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding, padding);
+    ctx.lineTo(padding, canvas.height - padding);
+    ctx.lineTo(canvas.width - padding, canvas.height - padding);
+    ctx.stroke();
+    
+    // Draw bars
+    const barWidth = chartWidth / values.length;
+    ctx.fillStyle = '#667eea';
+    
+    values.forEach((value, index) => {
+        const barHeight = (value / maxValue) * chartHeight;
+        const x = padding + index * barWidth + barWidth * 0.1;
+        const y = canvas.height - padding - barHeight;
+        
+        ctx.fillRect(x, y, barWidth * 0.8, barHeight);
+        
+        // Add value labels on top
+        ctx.fillStyle = '#2d3748';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Rs ' + value.toFixed(0), x + barWidth * 0.4, y - 5);
+        
+        // Add month labels at bottom
+        ctx.fillText(monthLabels[index], x + barWidth * 0.4, canvas.height - padding + 15);
+        
+        ctx.fillStyle = '#667eea';
+    });
 }
