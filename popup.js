@@ -1,31 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Create refresh button
-    const refreshButton = document.createElement('button');
-    refreshButton.id = 'refreshBtn';
-    refreshButton.textContent = 'Refresh';
-    refreshButton.style.cssText = `
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        padding: 8px 12px;
-        background: #4ECDC4;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 12px;
-        z-index: 10000;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    `;
-    document.body.appendChild(refreshButton);
-
-    // Refresh button click handler
-    refreshButton.addEventListener('click', () => {
-        refreshTransactionData();
+    // Get stored transactions and display analysis
+    chrome.storage.local.get(['transactions'], (result) => {
+        const transactions = result.transactions || [];
+        if (transactions.length > 0) {
+            displayAnalysis(transactions);
+        } else {
+            document.getElementById('content').innerHTML = `
+                <div class="no-data">
+                    <p>No transactions found yet.</p>
+                    <p>Visit <a href="https://paytm.com/myorders" target="_blank">Paytm Orders</a> to start tracking.</p>
+                </div>
+            `;
+        }
     });
-
-    // Load initial data
-    loadAndDisplayTransactions();
 });
 
 // Listen for updates from content script
@@ -741,134 +728,4 @@ function createMonthlyChart(monthlyData) {
         
         ctx.fillStyle = '#667eea';
     });
-}
-
-// Refresh function
-function refreshTransactionData() {
-    const refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-        refreshBtn.textContent = 'Refreshing...';
-        refreshBtn.disabled = true;
-    }
-
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const activeTab = tabs[0];
-        
-        if (activeTab && activeTab.url && activeTab.url.includes('paytm.com')) {
-            chrome.scripting.executeScript({
-                target: { tabId: activeTab.id },
-                function: extractTransactionData
-            }, (results) => {
-                if (results && results[0] && results[0].result) {
-                    const newTransactions = results[0].result;
-                    chrome.storage.local.set({ transactions: newTransactions }, () => {
-                        displayAnalysis(newTransactions);
-                        showNotification('Data refreshed! Found ' + newTransactions.length + ' transactions.');
-                    });
-                }
-                
-                if (refreshBtn) {
-                    refreshBtn.textContent = 'Refresh';
-                    refreshBtn.disabled = false;
-                }
-            });
-        } else {
-            showNotification('Please navigate to Paytm page to refresh data.');
-            if (refreshBtn) {
-                refreshBtn.textContent = 'Refresh';
-                refreshBtn.disabled = false;
-            }
-        }
-    });
-}
-
-// Extract transaction data
-function extractTransactionData() {
-    const rows = document.querySelectorAll('._2PmH5');
-    const transactions = [];
-
-    rows.forEach(row => {
-        const description = row.querySelector('._1Jw44')?.textContent?.trim() || '';
-        const amount = row.querySelector('._2Llef._2g75t.LwOpS')?.textContent?.trim() || '';
-        const status = row.querySelector('.vt2ni')?.textContent?.trim() || '';
-        const date = row.querySelector('.UZK5K span:last-child')?.textContent?.trim() || '';
-
-        if (status.toLowerCase().includes('success') && amount) {
-            const amountValue = parseFloat(amount.replace('Rs ', '').replace(/,/g, '')) || 0;
-            
-            let category = 'Other';
-            const desc = description.toLowerCase();
-            if (desc.includes('metro') || desc.includes('taxi') || desc.includes('uber') || desc.includes('ola')) {
-                category = 'Transport';
-            } else if (desc.includes('dth') || desc.includes('bill payment') || desc.includes('electricity') || desc.includes('gas')) {
-                category = 'Bills';
-            } else if (desc.includes('recharge') || desc.includes('mobile') || desc.includes('airtel') || desc.includes('jio')) {
-                category = 'Recharge';
-            } else if (desc.includes('food') || desc.includes('restaurant') || desc.includes('zomato') || desc.includes('swiggy')) {
-                category = 'Food';
-            } else if (desc.includes('movie') || desc.includes('entertainment') || desc.includes('bookmyshow')) {
-                category = 'Entertainment';
-            } else if (desc.includes('shopping') || desc.includes('amazon') || desc.includes('flipkart')) {
-                category = 'Shopping';
-            } else if (desc.includes('medicine') || desc.includes('pharmacy') || desc.includes('hospital')) {
-                category = 'Healthcare';
-            }
-
-            transactions.push({
-                description,
-                amount: amountValue,
-                date,
-                category
-            });
-        }
-    });
-
-    return transactions;
-}
-
-// Load and display transactions
-function loadAndDisplayTransactions() {
-    chrome.storage.local.get(['transactions'], (result) => {
-        const transactions = result.transactions || [];
-        if (transactions.length > 0) {
-            displayAnalysis(transactions);
-        } else {
-            document.getElementById('content').innerHTML = `
-                <div class="no-data">
-                    <p>No transactions found yet.</p>
-                    <p>Visit <a href="https://paytm.com/myorders" target="_blank">Paytm Orders</a> to start tracking.</p>
-                </div>
-            `;
-        }
-    });
-}
-
-// Show notification
-function showNotification(message) {
-    const existingNotification = document.querySelector('.notification');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
-
-    const notification = document.createElement('div');
-    notification.className = 'notification';
-    notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        top: 50px;
-        right: 10px;
-        background: #4ECDC4;
-        color: white;
-        padding: 10px 15px;
-        border-radius: 6px;
-        font-size: 12px;
-        z-index: 10001;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    `;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
 }
