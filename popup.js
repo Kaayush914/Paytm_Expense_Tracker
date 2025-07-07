@@ -263,7 +263,7 @@ document.getElementById('analyzeBtn').addEventListener('click', async () => {
                     <div style="padding: 12px; border-bottom: ${index < recentTransactions.length - 1 ? '1px solid #e2e8f0' : 'none'}; display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <div style="font-weight: 500; color: #2d3748; font-size: 14px;">${trans.description}</div>
-                            <div style="font-size: 12px; color: #718096;">${trans.date} • ${trans.category}</div>
+                            <div style="font-size: 12px; color: #718096;">${trans.date} on ${trans.category}</div>
                         </div>
                         <div style="font-weight: 600; color: #e53e3e;">Rs ${trans.amount.toFixed(2)}</div>
                     </div>

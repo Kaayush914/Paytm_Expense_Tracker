@@ -1,113 +1,358 @@
+
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Paytm Expense Analyzer</title>
     <style>
-        body {
-            width: 350px;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
             margin: 0;
-            color: #333;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            width: 380px;
+            min-height: 600px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            margin: 0;
+            color: #1a202c;
+            overflow: hidden;
         }
         
         .container {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 10px;
+            box-shadow: 
+                0 20px 40px rgba(0,0,0,0.1),
+                0 8px 32px rgba(102, 126, 234, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: containerSlideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes containerSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+            animation: headerPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes headerPulse {
+            0%, 100% { opacity: 0.5; width: 40px; }
+            50% { opacity: 1; width: 60px; }
         }
         
         h2 {
-            margin: 0 0 20px 0;
+            margin: 0;
             color: #1a202c;
-            font-size: 24px;
-            text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes titleGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .feature-item {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+            padding: 18px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-item::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+            opacity: 0;
+        }
+        
+        .feature-item:hover::before {
+            animation: shimmer 0.8s ease-in-out;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); opacity: 0; }
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 16px 40px rgba(0,0,0,0.12),
+                0 8px 16px rgba(102, 126, 234, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+        
+        .feature-item .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+            animation: iconFloat 2s ease-in-out infinite;
+        }
+        
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        
+        .feature-item .text {
+            font-size: 13px;
+            color: #4a5568;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
         
         .info {
-            margin: 15px 0;
-            padding: 15px;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.95) 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
             font-size: 14px;
-            line-height: 1.5;
+            line-height: 1.6;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            position: relative;
+        }
+        
+        .info::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+        
+        .info a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .info a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        
+        .info a:hover::after {
+            width: 100%;
+        }
+        
+        .tip {
+            background: linear-gradient(135deg, rgba(254, 245, 231, 0.95) 0%, rgba(254, 215, 170, 0.95) 100%);
+            border: 1px solid rgba(246, 173, 85, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 15px 0;
+            font-size: 13px;
+            color: #744210;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tip::before {
+            content: '💡';
+            position: absolute;
+            top: 50%;
+            left: 16px;
+            transform: translateY(-50%);
+            font-size: 18px;
+            animation: tipGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes tipGlow {
+            0%, 100% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.1); }
+        }
+        
+        .tip-content {
+            margin-left: 35px;
         }
         
         button {
             width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            margin: 15px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 16px;
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 8px 32px rgba(102, 126, 234, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        button:hover::before {
+            left: 100%;
         }
         
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 
+                0 16px 40px rgba(102, 126, 234, 0.4),
+                0 8px 16px rgba(102, 126, 234, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
         
         button:active {
-            transform: translateY(0);
-        }
-        
-        .no-data {
-            text-align: center;
-            padding: 20px;
-            color: #718096;
-        }
-        
-        .no-data a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        
-        .no-data a:hover {
-            text-decoration: underline;
+            transform: translateY(-1px);
         }
         
         .summary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
             margin: 20px 0;
         }
         
         .stat {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            padding: 15px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+            padding: 18px;
+            border-radius: 16px;
             text-align: center;
-            border: 1px solid #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+        
+        .stat:hover::before {
+            transform: translateX(0);
+        }
+        
+        .stat:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 40px rgba(0,0,0,0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
         }
         
         .stat h3 {
-            margin: 0 0 5px 0;
-            font-size: 12px;
+            margin: 0 0 8px 0;
+            font-size: 11px;
             color: #718096;
             text-transform: uppercase;
             font-weight: 600;
+            letter-spacing: 1px;
         }
         
         .amount {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
             color: #2d3748;
             margin: 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .count {
@@ -115,74 +360,106 @@
             font-weight: 700;
             color: #667eea;
             margin: 0;
+            animation: countPulse 2s ease-in-out infinite;
         }
         
-        .charts {
-            margin: 20px 0;
+        @keyframes countPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
         
         .chart-container {
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+            padding: 20px;
+            border-radius: 16px;
             margin-bottom: 15px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.1) 50%, transparent 51%);
+            animation: chartShimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes chartShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
         
         .chart-container h3 {
-            margin: 0 0 10px 0;
+            margin: 0 0 15px 0;
             color: #2d3748;
             font-size: 16px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
         }
         
         .chart-container canvas {
             max-width: 100%;
             height: auto;
-        }
-        
-        /* Scrollable chart container for daily trends */
-        .scrollable-chart {
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding: 10px 0;
-        }
-        
-        .scrollable-chart canvas {
-            min-width: 600px;
-            height: 200px;
-        }
-        
-        .recent-transactions {
-            margin: 20px 0;
-        }
-        
-        .recent-transactions h3 {
-            margin: 0 0 15px 0;
-            color: #2d3748;
-            font-size: 16px;
+            position: relative;
+            z-index: 1;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
         }
         
         .transaction-list {
-            background: #f8fafc;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+            border-radius: 16px;
             overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
         }
         
         .transaction {
-            padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 16px;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .transaction::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.1), transparent);
+            transition: width 0.3s ease;
+        }
+        
+        .transaction:hover::before {
+            width: 100%;
+        }
+        
+        .transaction:hover {
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.5);
         }
         
         .transaction:last-child {
             border-bottom: none;
-        }
-        
-        .trans-info {
-            flex: 1;
         }
         
         .trans-desc {
@@ -205,39 +482,20 @@
             font-size: 14px;
         }
         
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .feature-item {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .feature-item .text {
-            font-size: 14px;
-            color: #4a5568;
-            font-weight: 600;
-        }
-        
         .loading {
             text-align: center;
-            padding: 20px;
+            padding: 40px 20px;
             color: #667eea;
+            font-size: 16px;
+            font-weight: 500;
         }
         
         .loading::after {
             content: "...";
-            animation: dots 1.5s steps(5, end) infinite;
+            animation: loadingDots 1.5s steps(5, end) infinite;
         }
         
-        @keyframes dots {
+        @keyframes loadingDots {
             0%, 20% {
                 color: rgba(102, 126, 234, 0);
                 text-shadow: 0.25em 0 0 rgba(102, 126, 234, 0),
@@ -258,52 +516,97 @@
             }
         }
         
-        .tip {
-            background: linear-gradient(135deg, #fef5e7 0%, #fed7aa 100%);
-            border: 1px solid #f6ad55;
-            border-radius: 8px;
-            padding: 12px;
-            margin: 15px 0;
-            font-size: 13px;
-            color: #744210;
+        .no-data {
+            text-align: center;
+            padding: 40px 20px;
+            color: #718096;
+            font-size: 15px;
+            line-height: 1.6;
         }
         
-        .refresh-indicator {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: #48bb78;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            animation: fadeInOut 2s ease-in-out;
-            z-index: 1000;
+        .no-data a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
         
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(-10px); }
-            50% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-10px); }
+        .no-data a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        
+        /* Custom scrollbar for the container */
+        .container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        .container::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 3px;
+        }
+        
+        .container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a67d8, #6b46c1);
+        }
+        
+        /* Floating particles animation */
+        .container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.3), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.2), transparent),
+                radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.3), transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.2), transparent);
+            animation: particleFloat 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes particleFloat {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-100px); }
+        }
+        
+        /* Ensure content is above particles */
+        .container > * {
+            position: relative;
+            z-index: 1;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>  Paytm Expense Analyzer</h2>
+        <div class="header">
+            <h2>Paytm Expense Analyzer</h2>
+        </div>
         
         <div class="feature-grid">
             <div class="feature-item">
-                <div class="text"> &#128200 Visual Charts</div>
+                <span class="icon">&#128200</span>
+                <div class="text">Visual Charts</div>
             </div>
             <div class="feature-item">
-                <div class="text"> &#128202 Auto Categories</div>
+                <span class="icon">&#128202</span>
+                <div class="text">Auto Categories</div>
             </div>
             <div class="feature-item">
-                <div class="text">  &#128176 Spending Trends</div>
+                <span class="icon">&#128176</span>
+                <div class="text">Spending Trends</div>
             </div>
             <div class="feature-item">
-                <div class="text"> &#128269 Budget Insights</div>
+                <span class="icon">&#128269</span>
+                <div class="text">Smart Insights</div>
             </div>
         </div>
         
@@ -316,7 +619,9 @@
         </div>
         
         <div class="tip">
-           &#128161 For best results, scroll down on Paytm page to load more transactions before analyzing
+            <div class="tip-content">
+                For best results, scroll down on Paytm page to load more transactions before analyzing
+            </div>
         </div>
         
         <button id="analyzeBtn">
@@ -327,7 +632,6 @@
             <!-- Analysis content will be loaded here -->
         </div>
     </div>
-    
     <script src="popup.js"></script>
 </body>
 </html>
