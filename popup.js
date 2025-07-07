@@ -51,7 +51,19 @@ document.getElementById('analyzeBtn').addEventListener('click', async () => {
 
             rows.forEach(row => {
                 const description = row.querySelector('._1Jw44')?.textContent?.trim() || '';
-                const amount = row.querySelector('._2Llef._2g75t.LwOpS')?.textContent?.trim() || '';
+
+                // Find amount dynamically without relying on fragile class names
+                let amountText = '';
+                const amountSpan = [...row.querySelectorAll('span')]
+                    .find(el => el.textContent.includes('Rs') && /\d/.test(el.textContent));
+
+                if (amountSpan) {
+                    amountText = amountSpan.textContent.replace(/\s+/g, ' ').trim(); // normalize line breaks/spaces
+                }
+
+                const amount = amountText.replace('Rs', '').replace(/,/g, '').trim();
+                const amountValue = parseFloat(amount) || 0;
+
                 const status = row.querySelector('.vt2ni')?.textContent?.trim() || '';
                 const date = row.querySelector('.UZK5K span:last-child')?.textContent?.trim() || '';
 

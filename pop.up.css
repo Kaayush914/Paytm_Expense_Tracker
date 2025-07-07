@@ -1,0 +1,245 @@
+/* Add these styles to your popup.css or in <style> tags in popup.html */
+
+.analysis-container {
+    padding: 10px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.summary-card.total-spent {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.summary-card.total-transactions {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.summary-card.avg-transaction {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.summary-card.top-category {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.summary-value {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.summary-label {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+.section {
+    margin-bottom: 20px;
+}
+
+.section h3 {
+    margin: 0 0 10px 0;
+    color: #2d3748;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.category-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    padding: 10px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category-info {
+    flex: 1;
+}
+
+.category-name {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 14px;
+}
+
+.category-count {
+    font-size: 11px;
+    color: #718096;
+}
+
+.category-amount {
+    text-align: right;
+}
+
+.category-total {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 14px;
+}
+
+.category-percentage {
+    font-size: 11px;
+    color: #718096;
+}
+
+.transaction-list {
+    background: #f8fafc;
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.transaction-item {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-info {
+    flex: 1;
+}
+
+.transaction-description {
+    font-weight: 500;
+    color: #2d3748;
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+
+.transaction-meta {
+    font-size: 11px;
+    color: #718096;
+}
+
+.transaction-amount {
+    font-weight: 600;
+    color: #e53e3e;
+    font-size: 13px;
+}
+
+.chart-container {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.insight-item {
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.insight-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.insight-text {
+    font-size: 13px;
+    color: #4a5568;
+    line-height: 1.4;
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px 20px;
+    color: #718096;
+}
+
+.no-data a {
+    color: #4299e1;
+    text-decoration: none;
+}
+
+.no-data a:hover {
+    text-decoration: underline;
+}
+
+/* Scrollbar styling */
+.analysis-container::-webkit-scrollbar,
+.transaction-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.analysis-container::-webkit-scrollbar-track,
+.transaction-list::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.analysis-container::-webkit-scrollbar-thumb,
+.transaction-list::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+.analysis-container::-webkit-scrollbar-thumb:hover,
+.transaction-list::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 350px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-value {
+        font-size: 16px;
+    }
+    
+    .category-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .category-amount {
+        text-align: left;
+        width: 100%;
+    }
+}
